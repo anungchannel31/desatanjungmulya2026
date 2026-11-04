@@ -301,32 +301,80 @@ async function loadAdmin(kind) {
       return;
     }
 
-    const cols = kind === "letters"
-      ? ["tracking_code", "full_name", "letter_type", "status", "created_at"]
-      : kind === "complaints"
-      ? ["ticket_code", "reporter_name", "category", "status", "created_at"]
-      : ["title", "category", "is_published", "created_at"];
+    
+if (kind === "news") {
+  let html = `
+    <h3>Kelola Berita Desa</h3>
 
-    let html = "<table><thead><tr>" +
-      cols.map(c => "<th>" + safe(c) + "</th>").join("") +
-      (["letters", "complaints"].includes(kind) ? "<th>Ubah status</th>" : "") +
-      "</tr></thead><tbody>";
+    <form id="newsForm" onsubmit="saveNews(event)">
+      <input type="hidden" id="newsId">
 
-    for (const r of data || []) {
-      html += "<tr>" + cols.map(c => "<td>" + safe(r[c]) + "</td>").join("");
+      <label>Judul Berita</label>
+      <input id="newsTitle" type="text" required>
 
-      if (["letters", "complaints"].includes(kind)) {
-        html += `<td><select onchange="updateStatus('${table}','${r.id}',this.value)">
-          <option value="">Pilih status</option>
-          ${["Diterima", "Diproses", "Selesai", "Siap Diambil"].map(s => `<option>${s}</option>`).join("")}
-        </select></td>`;
-      }
+      <label>Kategori</label>
+      <input id="newsCategory" type="text" required>
 
-      html += "</tr>";
-    }
+      <label>Isi Berita</label>
+      <textarea id="newsBody" rows="6" required></textarea>
 
-    document.getElementById("adminContent").innerHTML =
-      html + "</tbody></table>";
+      <button type="submit">Simpan Draft</button>
+      <button type="button" onclick="resetNewsForm()">Batal Edit</button>
+    </form>
+
+    <hr>
+    <h3>Daftar Berita</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Judul</th>
+          <th>Kategori</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  for (const r of data || []) {
+    html += `<tr>
+      <td>${safe(r.title)}</td>
+      <td>${safe(r.category)}</td>
+      <td>${r.is_published ? "Terbit" : "Draft"}</td>
+      <td>
+        <button type="button" onclick="editNews('${r.id}')">Edit</button>
+        <button type="button" onclick="publishNews('${r.id}',${!r.is_published})">
+          ${r.is_published ? "Sembunyikan" : "Terbitkan"}
+        </button>
+      </td>
+    </tr>`;
+  }
+
+  html += `</tbody></table>`;
+  document.getElementById("adminContent").innerHTML = html;
+  return;
+}
+
+const cols = kind === "letters"
+  ? ["tracking_code", "full_name", "letter_type", "status", "created_at"]
+  : ["ticket_code", "reporter_name", "category", "status", "created_at"];
+
+let html = "<table><thead><tr>" +
+  cols.map(c => "<th>" + safe(c) + "</th>").join("") +
+  "<th>Ubah status</th></tr></thead><tbody>";
+
+for (const r of data || []) {
+  html += "<tr>" + cols.map(c => "<td>" + safe(r[c]) + "</td>").join("");
+
+  html += `<td><select onchange="updateStatus('${table}','${r.id}',this.value)">
+    <option value="">Pilih status</option>
+    ${["Diterima", "Diproses", "Selesai", "Siap Diambil"].map(s =>
+      `<option>${s}</option>`).join("")}
+  </select></td></tr>`;
+}
+
+document.getElementById("adminContent").innerHTML =
+  html + "</tbody></table>";
+
 
   } catch (err) {
     document.getElementById("adminContent").textContent = err.message;
@@ -352,6 +400,106 @@ async function approveUMKM(id) {
 
   } catch (err) {
     alert("Gagal menyetujui produk: " + err.message);
+  }
+}
+
+async function saveNews(event) {
+  event.preventDefault();
+
+  try {
+    needDB();
+
+    const id = document.getElementById("newsId").value;
+    const title = document.getElementById("newsTitle").value.trim();
+    const category = document.getElementById("newsCategory").value.trim();
+    const body = document.getElementById("newsBody").value.trim();
+
+    if (!title || !category || !body) {
+      throw new Error("Semua kolom berita wajib diisi.");
+    }
+
+    let result;
+
+    if (id) {
+      result = await db.from("news")
+        .update({ title, category, body })
+        .eq("id", id);
+    } else {
+      result = await db.from("news")
+        .insert({
+          title,
+          category,
+          body,
+          is_published: false
+        });
+    }
+
+    if (result.error) throw result.error;
+
+    alert("Berita berhasil disimpan!");
+    await loadAdmin("news");
+    await loadPublic();
+
+  } catch (err) {
+    alert("Gagal menyimpan berita: " + err.message);
+  }
+}
+
+function resetNewsForm() {
+  document.getElementById("newsForm").reset();
+  document.getElementById("newsId").value = "";
+}
+
+async function editNews(id) {
+  try {
+    needDB();
+
+    const { data, error } = await db
+      .from("news")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+
+    document.getElementById("newsId").value = data.id;
+    document.getElementById("newsTitle").value = data.title || "";
+    document.getElementById("newsCategory").value = data.category || "";
+    document.getElementById("newsBody").value = data.body || "";
+
+    document.getElementById("newsForm").scrollIntoView({
+      behavior: "smooth"
+    });
+
+  } catch (err) {
+    alert("Gagal membuka berita: " + err.message);
+  }
+}
+
+async function publishNews(id, publish) {
+  if (!confirm(publish
+    ? "Terbitkan berita ini?"
+    : "Sembunyikan berita ini?")) return;
+
+  try {
+    needDB();
+
+    const { error } = await db
+      .from("news")
+      .update({
+        is_published: publish,
+        published_at: publish ? new Date().toISOString() : null
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    alert("Status berita berhasil diperbarui!");
+    await loadAdmin("news");
+    await loadPublic();
+
+  } catch (err) {
+    alert("Gagal mengubah berita: " + err.message);
   }
 }
 
