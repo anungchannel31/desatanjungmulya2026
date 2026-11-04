@@ -853,6 +853,40 @@ async function saveNews(event) {
     msg.textContent = "GAGAL MENYIMPAN: " + err.message;
   }
 }
+  async function editResident(id) {
+  try {
+    needDB();
+
+    const { data, error } = await db
+      .from("residents")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+
+    document.getElementById("residentId").value = data.id;
+    document.getElementById("residentName").value = data.full_name || "";
+    document.getElementById("residentGender").value = data.gender || "";
+    document.getElementById("residentBirth").value = data.birth_date || "";
+    document.getElementById("residentEducation").value = data.education || "";
+    document.getElementById("residentOccupation").value = data.occupation || "";
+    document.getElementById("residentRT").value = data.rt || "";
+    document.getElementById("residentRW").value = data.rw || "";
+    document.getElementById("residentAddress").value = data.address || "";
+    document.getElementById("residentStatus").value = data.resident_status || "Aktif";
+
+    document.getElementById("residentForm").scrollIntoView({
+      behavior: "smooth"
+    });
+
+    document.getElementById("residentMsg").textContent =
+      "Mode edit: Silakan ubah data yang diperlukan.";
+
+  } catch (err) {
+    alert("Gagal membuka data penduduk: " + err.message);
+  }
+}
 function previewNewsPhoto(event) {
   const file = event.target.files[0];
   const preview = document.getElementById("newsPhotoPreview");
