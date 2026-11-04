@@ -570,7 +570,7 @@ let html = `
 
 <form id="residentForm" onsubmit="saveResident(event)"
   style="display:grid;gap:12px;max-width:600px;margin-bottom:25px">
-
+<input type="hidden" id="residentId">
   <label>Nama Lengkap</label>
   <input id="residentName" type="text" required>
 
@@ -804,7 +804,9 @@ async function saveNews(event) {
 
     msg.textContent = "Sedang menyimpan data...";
 
-    const { error } = await db.from("residents").insert({
+    const id = document.getElementById("residentId").value;
+
+    const residentData = {
       full_name: document.getElementById("residentName").value.trim(),
       gender: document.getElementById("residentGender").value,
       birth_date: document.getElementById("residentBirth").value || null,
@@ -813,14 +815,38 @@ async function saveNews(event) {
       rt: document.getElementById("residentRT").value.trim() || null,
       rw: document.getElementById("residentRW").value.trim() || null,
       address: document.getElementById("residentAddress").value.trim() || null,
-      resident_status: document.getElementById("residentStatus").value,
-      created_by: currentAdmin.id
-    });
+      resident_status: document.getElementById("residentStatus").value
+    };
 
-    if (error) throw error;
+    let result;
 
-    msg.textContent = "BERHASIL! Data penduduk sudah disimpan.";
+    if (id) {
+      result = await db
+        .from("residents")
+        .update(residentData)
+        .eq("id", id);
+    } else {
+      residentData.created_by = currentAdmin.id;
+
+      result = await db
+        .from("residents")
+        .insert(residentData);
+    }
+
+    if (result.error) throw result.error;
+
+    const pesan = id
+      ? "BERHASIL! Data penduduk sudah diperbarui."
+      : "BERHASIL! Data penduduk sudah disimpan.";
+
     document.getElementById("residentForm").reset();
+
+    await loadAdmin("residents");
+
+    const pesanBaru = document.getElementById("residentMsg");
+    if (pesanBaru) {
+      pesanBaru.textContent = pesan;
+    }
 
   } catch (err) {
     console.error("Gagal menyimpan data penduduk:", err);
