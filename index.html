@@ -546,6 +546,17 @@ const statsHtml = `
         </div>
       `).join("")}
     </div>
+        <div class="card" style="grid-column:1/-1">
+      <h3>Statistik Kelompok Umur</h3>
+
+      ${Object.entries(kelompokUmur).map(([nama,jumlah]) => `
+        <p>${nama}: <b>${jumlah}</b></p>
+
+        <div style="background:#e5eaf0;height:12px;border-radius:10px;margin-bottom:12px">
+          <div style="background:#f28c28;width:${totalPenduduk ? jumlah / totalPenduduk * 100 : 0}%;height:12px;border-radius:10px"></div>
+        </div>
+      `).join("")}
+    </div>
   </div>
 `;
 let html = `
