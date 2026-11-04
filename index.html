@@ -422,6 +422,45 @@ if (kind === "news") {
   return;
 }
 
+if (kind === "residents") {
+  let html = `
+    <h3>Data Masyarakat Desa Tanjungmulya</h3>
+    <p>Data ini hanya dapat diakses oleh pegawai desa yang memiliki izin.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nama Lengkap</th>
+          <th>Jenis Kelamin</th>
+          <th>Tanggal Lahir</th>
+          <th>Pendidikan</th>
+          <th>Pekerjaan</th>
+          <th>RT</th>
+          <th>RW</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  for (const r of data || []) {
+    html += `<tr>
+      <td>${safe(r.full_name)}</td>
+      <td>${safe(r.gender)}</td>
+      <td>${safe(r.birth_date)}</td>
+      <td>${safe(r.education)}</td>
+      <td>${safe(r.occupation)}</td>
+      <td>${safe(r.rt)}</td>
+      <td>${safe(r.rw)}</td>
+      <td>${safe(r.resident_status)}</td>
+    </tr>`;
+  }
+
+  html += `</tbody></table>`;
+
+  document.getElementById("adminContent").innerHTML = html;
+  return;
+}
+
 const cols = kind === "letters"
   ? ["tracking_code", "full_name", "letter_type", "status", "created_at"]
   : ["ticket_code", "reporter_name", "category", "status", "created_at"];
