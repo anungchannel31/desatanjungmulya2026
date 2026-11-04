@@ -255,7 +255,50 @@ async function loadPublic() {
       '<div class="card">Produk UMKM belum dapat dimuat. Silakan coba kembali.</div>';
   }
 }
-document.getElementById("loginForm").addEventListener("submit",async e=>{e.preventDefault();try{needDB();const fd=new FormData(e.target);const {data,error}=await db.auth.signInWithPassword({email:fd.get("email"),password:fd.get("password")});if(error)throw error;currentAdmin=data.user;say("loginMsg","Login berhasil.");document.getElementById("adminPanel").style.display="block";document.getElementById("adminEmail").textContent=currentAdmin.email;await loadAdmin("letters")}catch(err){say("loginMsg",err.message)}});
+document.getElementById("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  try {
+    needDB();
+
+    const fd = new FormData(e.target);
+
+    const { data, error } = await db.auth.signInWithPassword({
+      email: fd.get("email"),
+      password: fd.get("password")
+    });
+
+    if (error) throw error;
+
+    // Periksa izin pegawai desa
+    const { data: allowed, error: roleError } =
+      await db.rpc("is_village_staff");
+
+    if (roleError) throw roleError;
+
+    if (allowed !== true) {
+      await db.auth.signOut();
+      throw new Error(
+        "Akun ini belum memiliki izin sebagai pegawai desa."
+      );
+    }
+
+    currentAdmin = data.user;
+
+    say("loginMsg", "Login berhasil. Selamat datang!");
+
+    document.getElementById("adminPanel").style.display = "block";
+    document.getElementById("adminEmail").textContent =
+      currentAdmin.email;
+
+    await loadAdmin("letters");
+
+  } catch (err) {
+    currentAdmin = null;
+    document.getElementById("adminPanel").style.display = "none";
+    say("loginMsg", "Login gagal: " + err.message);
+  }
+});
 async function logout(){if(db)await db.auth.signOut();currentAdmin=null;document.getElementById("adminPanel").style.display="none";say("loginMsg","Anda sudah keluar.")}
 
 async function loadAdmin(kind) {
