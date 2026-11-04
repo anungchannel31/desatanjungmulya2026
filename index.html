@@ -458,6 +458,48 @@ residents.forEach(r => {
   pekerjaanData[pekerjaan] =
     (pekerjaanData[pekerjaan] || 0) + 1;
 });
+  const kelompokUmur = {
+  "Bayi (0–5 tahun)": 0,
+  "Anak-anak (6–12 tahun)": 0,
+  "Remaja (13–17 tahun)": 0,
+  "Dewasa (18–59 tahun)": 0,
+  "Lansia (60 tahun ke atas)": 0,
+  "Belum diketahui": 0
+};
+
+const sekarang = new Date();
+
+residents.forEach(r => {
+  if (!r.birth_date) {
+    kelompokUmur["Belum diketahui"]++;
+    return;
+  }
+
+  const lahir = new Date(r.birth_date + "T00:00:00");
+
+  let umur = sekarang.getFullYear() - lahir.getFullYear();
+
+  const belumUlangTahun =
+    sekarang.getMonth() < lahir.getMonth() ||
+    (sekarang.getMonth() === lahir.getMonth() &&
+     sekarang.getDate() < lahir.getDate());
+
+  if (belumUlangTahun) umur--;
+
+  if (umur < 0) {
+    kelompokUmur["Belum diketahui"]++;
+  } else if (umur <= 5) {
+    kelompokUmur["Bayi (0–5 tahun)"]++;
+  } else if (umur <= 12) {
+    kelompokUmur["Anak-anak (6–12 tahun)"]++;
+  } else if (umur <= 17) {
+    kelompokUmur["Remaja (13–17 tahun)"]++;
+  } else if (umur <= 59) {
+    kelompokUmur["Dewasa (18–59 tahun)"]++;
+  } else {
+    kelompokUmur["Lansia (60 tahun ke atas)"]++;
+  }
+});
 const statsHtml = `
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:20px 0">
 
