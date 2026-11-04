@@ -631,26 +631,33 @@ let html = `
           <th>RT</th>
           <th>RW</th>
           <th>Status</th>
+          <th>Aksi</th>
         </tr>
       </thead>
       <tbody>`;
 
   for (const r of data || []) {
-    html += `<tr>
-      <td>${safe(r.full_name)}</td>
-      <td>${safe(r.gender)}</td>
-      <td>${safe(r.birth_date)}</td>
-      <td>${safe(r.education)}</td>
-      <td>${safe(r.occupation)}</td>
-      <td>${safe(r.rt)}</td>
-      <td>${safe(r.rw)}</td>
-      <td>${safe(r.resident_status)}</td>
-    </tr>`;
-  }
+  html += `<tr>
+    <td>${safe(r.full_name)}</td>
+    <td>${safe(r.gender)}</td>
+    <td>${safe(r.birth_date)}</td>
+    <td>${safe(r.education)}</td>
+    <td>${safe(r.occupation)}</td>
+    <td>${safe(r.rt)}</td>
+    <td>${safe(r.rw)}</td>
+    <td>${safe(r.resident_status)}</td>
+    <td>
+      <button class="btn" type="button"
+        onclick="editResident('${r.id}')">
+        Edit
+      </button>
+    </td>
+  </tr>`;
+}
 
-  html += `</tbody></table>`;
+html += `</tbody></table>`;
 
-  document.getElementById("adminContent").innerHTML = html;
+document.getElementById("adminContent").innerHTML = html;
   return;
 }
 
