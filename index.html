@@ -485,7 +485,25 @@ const statsHtml = `
       <h3>Meninggal</h3>
       <h2>${meninggal}</h2>
     </div>
+    <div class="card" style="grid-column:1/-1">
+      <h3>Statistik Pendidikan</h3>
+      ${Object.entries(pendidikanData).map(([nama,jumlah]) => `
+        <p>${nama}: <b>${jumlah}</b></p>
+        <div style="background:#e5eaf0;height:12px;border-radius:10px;margin-bottom:12px">
+          <div style="background:#f28c28;width:${totalPenduduk ? jumlah / totalPenduduk * 100 : 0}%;height:12px;border-radius:10px"></div>
+        </div>
+      `).join("")}
+    </div>
 
+    <div class="card" style="grid-column:1/-1">
+      <h3>Statistik Pekerjaan</h3>
+      ${Object.entries(pekerjaanData).map(([nama,jumlah]) => `
+        <p>${nama}: <b>${jumlah}</b></p>
+        <div style="background:#e5eaf0;height:12px;border-radius:10px;margin-bottom:12px">
+          <div style="background:#102b46;width:${totalPenduduk ? jumlah / totalPenduduk * 100 : 0}%;height:12px;border-radius:10px"></div>
+        </div>
+      `).join("")}
+    </div>
   </div>
 `;
 let html = `
