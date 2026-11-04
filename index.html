@@ -423,7 +423,87 @@ async function approveUMKM(id) {
     alert("Gagal menyetujui produk: " + err.message);
   }
 }
+async function saveNews(event) {
+  event.preventDefault();
 
+  try {
+    needDB();
+
+    const id = document.getElementById("newsId").value;
+    const title = document.getElementById("newsTitle").value.trim();
+    const category = document.getElementById("newsCategory").value.trim();
+    const body = document.getElementById("newsBody").value.trim();
+
+    const photoInput = document.getElementById("newsPhoto");
+    const photo = photoInput.files[0];
+
+    if (!title || !category || !body) {
+      throw new Error("Semua kolom berita wajib diisi.");
+    }
+
+    let image_url = null;
+
+    if (photo) {
+      if (photo.size > 5 * 1024 * 1024) {
+        throw new Error("Ukuran foto maksimal 5 MB.");
+      }
+
+      if (!["image/jpeg", "image/png", "image/webp"].includes(photo.type)) {
+        throw new Error("Foto harus JPG, PNG, atau WEBP.");
+      }
+
+      const ext = photo.type === "image/png" ? "png" :
+                  photo.type === "image/webp" ? "webp" : "jpg";
+
+      const path = "berita/" + crypto.randomUUID() + "." + ext;
+
+      const { error: uploadError } = await db.storage
+        .from("berita-foto")
+        .upload(path, photo, {
+          contentType: photo.type,
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: imageData } = db.storage
+        .from("berita-foto")
+        .getPublicUrl(path);
+
+      image_url = imageData.publicUrl;
+    }
+
+    const berita = { title, category, body };
+
+    if (image_url) {
+      berita.image_url = image_url;
+    }
+
+    let result;
+
+    if (id) {
+      result = await db.from("news")
+        .update(berita)
+        .eq("id", id);
+    } else {
+      result = await db.from("news")
+        .insert({
+          ...berita,
+          is_published: false
+        });
+    }
+
+    if (result.error) throw result.error;
+
+    alert("Berita berhasil disimpan!");
+
+    await loadAdmin("news");
+    await loadPublic();
+
+  } catch (err) {
+    alert("Gagal menyimpan berita: " + err.message);
+  }
+}
 function previewNewsPhoto(event) {
   const file = event.target.files[0];
   const preview = document.getElementById("newsPhotoPreview");
