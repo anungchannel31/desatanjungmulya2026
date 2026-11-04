@@ -307,9 +307,11 @@ async function loadAdmin(kind) {
   try {
     needDB();
 
-    const table = kind === "letters" ? "letter_requests" :
-      kind === "complaints" ? "complaints" :
-      kind === "news" ? "news" : "umkm_products";
+   const table = kind === "letters" ? "letter_requests" :
+  kind === "complaints" ? "complaints" :
+  kind === "news" ? "news" :
+  kind === "residents" ? "residents" :
+  "umkm_products";
 
     const { data, error } = await db
       .from(table)
