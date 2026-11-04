@@ -154,28 +154,32 @@ async function loadPublic() {
       .order("published_at", { ascending: false })
       .limit(6);
 
-    if (data?.length) {
-      document.getElementById("newsList").innerHTML =
-        data.map(n => `
-          <article class="card news-card">
-            <div class="news-art">📰</div>
-            <div class="news-body">
-              <div class="news-meta">
-                ${safe(n.category || "Berita")} •
-                ${n.published_at
-                  ? new Date(n.published_at).toLocaleDateString("id-ID")
-                  : ""}
-              </div>
-              <h3>${safe(n.title)}</h3>
-              <p>${safe(n.body)}</p>
-            </div>
-          </article>
-        `).join("");
-    }
+  if (data?.length) {
+  document.getElementById("newsList").innerHTML =
+    data.map(n => `
+      <article class="card news-card">
+        <div class="news-art">📰</div>
+        <div class="news-body">
+          <div class="news-meta">
+            ${safe(n.category || "Berita")} •
+            ${n.published_at
+              ? new Date(n.published_at).toLocaleDateString("id-ID")
+              : ""}
+          </div>
+          <h3>${safe(n.title)}</h3>
+          <p>${safe(n.body)}</p>
+        </div>
+      </article>
+    `).join("");
+} else {
+  document.getElementById("newsList").innerHTML =
+    '<div class="card">Belum ada berita yang diterbitkan.</div>';
+}
   } catch (e) {
     console.warn("Berita:", e);
+    document.getElementById("newsList").innerHTML =
+      '<div class="card">Berita belum dapat dimuat. Silakan coba kembali.</div>';
   }
-
   try {
     const { data, error } = await db.from("umkm_products")
       .select("id,name,description,price,contact,category,business_name,image_url")
