@@ -645,6 +645,38 @@ async function saveNews(event) {
     alert("Gagal menyimpan berita: " + err.message);
   }
 }
+  async function saveResident(event) {
+  event.preventDefault();
+
+  const msg = document.getElementById("residentMsg");
+
+  try {
+    needDB();
+
+    const { error } = await db.from("residents").insert({
+      full_name: document.getElementById("residentName").value.trim(),
+      gender: document.getElementById("residentGender").value,
+      birth_date: document.getElementById("residentBirth").value || null,
+      education: document.getElementById("residentEducation").value || null,
+      occupation: document.getElementById("residentOccupation").value.trim() || null,
+      rt: document.getElementById("residentRT").value.trim() || null,
+      rw: document.getElementById("residentRW").value.trim() || null,
+      address: document.getElementById("residentAddress").value.trim() || null,
+      resident_status: document.getElementById("residentStatus").value,
+      created_by: currentAdmin.id
+    });
+
+    if (error) throw error;
+
+    msg.textContent = "Data penduduk berhasil disimpan!";
+    document.getElementById("residentForm").reset();
+
+    await loadAdmin("residents");
+
+  } catch (err) {
+    msg.textContent = "Gagal menyimpan: " + err.message;
+  }
+}
 function previewNewsPhoto(event) {
   const file = event.target.files[0];
   const preview = document.getElementById("newsPhotoPreview");
