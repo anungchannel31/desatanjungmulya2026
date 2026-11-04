@@ -443,7 +443,21 @@ const aktif = residents.filter(
 const meninggal = residents.filter(
   r => r.resident_status === "Meninggal"
 ).length;
+const pendidikanData = {};
 
+residents.forEach(r => {
+  const pendidikan = r.education || "Belum diisi";
+  pendidikanData[pendidikan] =
+    (pendidikanData[pendidikan] || 0) + 1;
+});
+
+const pekerjaanData = {};
+
+residents.forEach(r => {
+  const pekerjaan = r.occupation || "Belum diisi";
+  pekerjaanData[pekerjaan] =
+    (pekerjaanData[pekerjaan] || 0) + 1;
+});
 const statsHtml = `
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:20px 0">
 
