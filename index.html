@@ -426,8 +426,62 @@ if (kind === "residents") {
   console.log("Menu Data Masyarakat berhasil dipanggil", data);
   let html = `
     <h3>Data Masyarakat Desa Tanjungmulya</h3>
-    <p>Data ini hanya dapat diakses oleh pegawai desa yang memiliki izin.</p>
+<p>Data ini hanya dapat diakses oleh pegawai desa yang memiliki izin.</p>
 
+<h3>Tambah Data Penduduk</h3>
+
+<form id="residentForm" onsubmit="saveResident(event)"
+  style="display:grid;gap:12px;max-width:600px;margin-bottom:25px">
+
+  <label>Nama Lengkap</label>
+  <input id="residentName" type="text" required>
+
+  <label>Jenis Kelamin</label>
+  <select id="residentGender" required>
+    <option value="">Pilih Jenis Kelamin</option>
+    <option value="Laki-laki">Laki-laki</option>
+    <option value="Perempuan">Perempuan</option>
+  </select>
+
+  <label>Tanggal Lahir</label>
+  <input id="residentBirth" type="date">
+
+  <label>Pendidikan</label>
+  <select id="residentEducation">
+    <option value="">Pilih Pendidikan</option>
+    <option>Belum Sekolah</option>
+    <option>SD</option>
+    <option>SMP</option>
+    <option>SMA/SMK</option>
+    <option>D1</option>
+    <option>D2</option>
+    <option>D3</option>
+    <option>S1</option>
+    <option>S2</option>
+    <option>S3</option>
+  </select>
+
+  <label>Pekerjaan</label>
+  <input id="residentOccupation" type="text">
+
+  <label>RT</label>
+  <input id="residentRT" type="text">
+
+  <label>RW</label>
+  <input id="residentRW" type="text">
+
+  <label>Alamat</label>
+  <textarea id="residentAddress" rows="3"></textarea>
+
+  <label>Status Penduduk</label>
+  <select id="residentStatus">
+    <option value="Aktif">Aktif</option>
+    <option value="Meninggal">Meninggal</option>
+  </select>
+
+  <button class="btn" type="submit">Simpan Data Penduduk</button>
+  <p id="residentMsg" class="statusline"></p>
+</form>
     <table>
       <thead>
         <tr>
