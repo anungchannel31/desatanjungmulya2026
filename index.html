@@ -424,6 +424,56 @@ if (kind === "news") {
 
 if (kind === "residents") {
   console.log("Menu Data Masyarakat berhasil dipanggil", data);
+  const residents = data || [];
+
+const totalPenduduk = residents.length;
+
+const lakiLaki = residents.filter(
+  r => r.gender === "Laki-laki"
+).length;
+
+const perempuan = residents.filter(
+  r => r.gender === "Perempuan"
+).length;
+
+const aktif = residents.filter(
+  r => r.resident_status === "Aktif"
+).length;
+
+const meninggal = residents.filter(
+  r => r.resident_status === "Meninggal"
+).length;
+
+const statsHtml = `
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:20px 0">
+
+    <div class="card">
+      <h3>Total Penduduk</h3>
+      <h2>${totalPenduduk}</h2>
+    </div>
+
+    <div class="card">
+      <h3>Laki-laki</h3>
+      <h2>${lakiLaki}</h2>
+    </div>
+
+    <div class="card">
+      <h3>Perempuan</h3>
+      <h2>${perempuan}</h2>
+    </div>
+
+    <div class="card">
+      <h3>Penduduk Aktif</h3>
+      <h2>${aktif}</h2>
+    </div>
+
+    <div class="card">
+      <h3>Meninggal</h3>
+      <h2>${meninggal}</h2>
+    </div>
+
+  </div>
+`;
   let html = `
     <h3>Data Masyarakat Desa Tanjungmulya</h3>
 <p>Data ini hanya dapat diakses oleh pegawai desa yang memiliki izin.</p>
