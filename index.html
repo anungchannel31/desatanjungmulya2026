@@ -319,8 +319,18 @@ if (kind === "news") {
       <label>Kategori</label>
       <input id="newsCategory" type="text" required>
 
-      <label>Isi Berita</label>
-     <textarea id="newsBody" rows="15" required
+     <label>Foto Berita (JPG, PNG, WEBP maksimal 5 MB)</label>
+<input
+  id="newsPhoto"
+  type="file"
+  accept="image/jpeg,image/png,image/webp"
+  onchange="previewNewsPhoto(event)"
+>
+
+<div id="newsPhotoPreview" style="margin-top:12px"></div>
+
+<label>Isi Berita</label>
+<textarea id="newsBody" rows="15" required
   style="min-height:300px; width:100%;"></textarea>
 
       <button type="submit">Simpan Draft</button>
@@ -408,46 +418,36 @@ async function approveUMKM(id) {
   }
 }
 
-async function saveNews(event) {
-  event.preventDefault();
+function previewNewsPhoto(event) {
+  const file = event.target.files[0];
+  const preview = document.getElementById("newsPhotoPreview");
 
-  try {
-    needDB();
+  if (!preview) return;
 
-    const id = document.getElementById("newsId").value;
-    const title = document.getElementById("newsTitle").value.trim();
-    const category = document.getElementById("newsCategory").value.trim();
-    const body = document.getElementById("newsBody").value.trim();
-
-    if (!title || !category || !body) {
-      throw new Error("Semua kolom berita wajib diisi.");
-    }
-
-    let result;
-
-    if (id) {
-      result = await db.from("news")
-        .update({ title, category, body })
-        .eq("id", id);
-    } else {
-      result = await db.from("news")
-        .insert({
-          title,
-          category,
-          body,
-          is_published: false
-        });
-    }
-
-    if (result.error) throw result.error;
-
-    alert("Berita berhasil disimpan!");
-    await loadAdmin("news");
-    await loadPublic();
-
-  } catch (err) {
-    alert("Gagal menyimpan berita: " + err.message);
+  if (!file) {
+    preview.innerHTML = "";
+    return;
   }
+
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    preview.textContent = "Format foto harus JPG, PNG, atau WEBP.";
+    event.target.value = "";
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    preview.textContent = "Ukuran foto maksimal 5 MB.";
+    event.target.value = "";
+    return;
+  }
+
+  const url = URL.createObjectURL(file);
+
+  preview.innerHTML = `
+    <img src="${url}"
+      alt="Pratinjau foto berita"
+      style="max-width:260px;width:100%;height:auto;border-radius:10px">
+  `;
 }
 
 function resetNewsForm() {
