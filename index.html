@@ -67,11 +67,61 @@ footer{background:#0c2238;color:#dce5ec;padding:38px 0 18px}.foot{display:flex;j
 <button class="btn">Kirim Pengaduan</button><p class="statusline" id="complaintMsg" aria-live="polite"></p></form></div>
 <div class="card"><div class="ico">🛠️</div><h3>Alur Penanganan</h3><p>01 • Diterima — laporan memperoleh nomor tiket.<br><br>02 • Verifikasi — petugas memeriksa informasi dan lokasi.<br><br>03 • Ditindaklanjuti — laporan diteruskan kepada perangkat terkait.<br><br>04 • Selesai — hasil penanganan diperbarui oleh petugas.</p><div class="notice">Jangan gunakan formulir ini untuk keadaan darurat yang membutuhkan pertolongan segera. Hubungi layanan darurat terkait.</div></div></div></div></section>
 
-<section id="umkm"><div class="wrap"><div class="head"><div class="tag">Bangga produk lokal</div><h2>Pasar Desa & UMKM</h2><p>Etalase digital produk buatan warga Desa Tanjungmulya.</p></div><div id="umkmList" class="grid three">
-<div class="card product"><div class="product-art">🍘</div><div><span class="pill">Contoh etalase</span><h3>Produk Kuliner Lokal</h3><p>Nama produk, deskripsi, dan kontak penjual akan ditampilkan di sini.</p><div class="price">Harga: hubungi penjual</div></div></div>
-<div class="card product"><div class="product-art">🧺</div><div><span class="pill">Contoh etalase</span><h3>Kerajinan Warga</h3><p>Produk kerajinan dan hasil karya UMKM desa.</p><div class="price">Harga: hubungi penjual</div></div></div>
-<div class="card product"><div class="product-art">🌾</div><div><span class="pill">Contoh etalase</span><h3>Hasil Pertanian</h3><p>Produk hasil bumi dan olahan masyarakat.</p><div class="price">Harga: hubungi penjual</div></div></div></div></div></section>
+<section id="umkm">
+<div class="wrap">
+  <div class="head">
+    <div class="tag">Bangga produk lokal</div>
+    <h2>Pasar Desa & UMKM</h2>
+    <p>Etalase digital produk buatan warga Desa Tanjungmulya.</p>
+  </div>
 
+  <div class="formbox" style="margin-bottom:24px">
+    <h3>🛍️ Pendaftaran UMKM Desa Tanjungmulya</h3>
+    <p class="hint">Daftarkan usaha dan produk Anda. Produk akan diperiksa admin sebelum ditampilkan.</p>
+
+    <form id="umkmForm">
+      <label>Nama pemilik usaha</label>
+      <input name="owner_name" required maxlength="120">
+
+      <label>Nama usaha</label>
+      <input name="business_name" required maxlength="150">
+
+      <label>Nomor WhatsApp</label>
+      <input name="contact" type="tel" required maxlength="24" placeholder="08xxxxxxxxxx">
+
+      <label>Kategori usaha</label>
+      <select name="category" required>
+        <option value="">Pilih kategori</option>
+        <option>Makanan dan Minuman</option>
+        <option>Kerajinan</option>
+        <option>Pertanian</option>
+        <option>Peternakan</option>
+        <option>Lainnya</option>
+      </select>
+
+      <label>Nama produk</label>
+      <input name="name" required maxlength="150">
+
+      <label>Harga produk (Rp)</label>
+      <input name="price" type="number" min="0" required>
+
+      <label>Deskripsi produk</label>
+      <textarea name="description" required maxlength="1500"></textarea>
+
+      <label>Foto produk (JPG, PNG, WEBP maksimal 5 MB)</label>
+      <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required>
+
+      <button class="btn" type="submit">Daftarkan Produk</button>
+      <p id="umkmMsg" class="statusline" aria-live="polite"></p>
+    </form>
+  </div>
+
+  <h3 style="color:var(--navy);margin-bottom:16px">Produk UMKM Warga</h3>
+  <div id="umkmList" class="grid three">
+    <div class="card">Memuat produk UMKM...</div>
+  </div>
+</div>
+</section>
 <section class="soft" id="admin"><div class="wrap"><div class="head"><div class="tag">Pengelolaan internal</div><h2>Login Admin Desa</h2><p>Area petugas untuk memverifikasi permohonan dan memperbarui informasi desa.</p></div>
 <div class="formbox" style="max-width:650px"><form id="loginForm"><label>Email admin</label><input name="email" type="email" required autocomplete="username"><label>Password</label><input name="password" type="password" required autocomplete="current-password"><button class="btn">Masuk Dashboard</button><p class="statusline" id="loginMsg" aria-live="polite"></p></form>
 <div id="adminPanel"><div class="adminbar"><b id="adminEmail"></b><button onclick="loadAdmin('letters')" class="active">Permohonan Surat</button><button onclick="loadAdmin('complaints')">Pengaduan</button><button onclick="loadAdmin('news')">Berita</button><button onclick="loadAdmin('umkm')">UMKM</button><button onclick="logout()">Keluar</button></div><div id="adminContent" class="tablewrap"></div></div>
