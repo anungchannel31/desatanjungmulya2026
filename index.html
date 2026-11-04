@@ -144,17 +144,179 @@ function safe(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&
 function needDB(){if(!db)throw new Error("Database belum dikonfigurasi. Ikuti README dan isi URL serta anon key Supabase.");}
 function fileExt(f){return (f.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"")}
 async function uploadPrivate(file,folder){const path=folder+"/"+crypto.randomUUID()+"."+fileExt(file);const {error}=await db.storage.from(BUCKET).upload(path,file,{upsert:false,contentType:file.type||"application/octet-stream"});if(error)throw error;return path}
-async function submitFiles(files,folder){let paths=[];for(const f of files){if(f.size>5*1024*1024)throw new Error("Setiap file maksimal 5 MB.");paths.push(await uploadPrivate(f,folder))}return paths}
-document.getElementById("letterForm").addEventListener("submit",async e=>{e.preventDefault();try{needDB();const f=e.target;const data=Object.fromEntries(new FormData(f).entries());const files=[...f.elements.documents.files];say("letterMsg","Mengirim pengajuan…");const paths=await submitFiles(files,"surat");const code="TM-"+crypto.randomUUID().replaceAll("-","").slice(0,12).toUpperCase();const {error}=await db.from("letter_requests").insert({tracking_code:code,full_name:data.full_name,nik:data.nik,phone:data.phone,letter_type:data.letter_type,purpose:data.purpose,document_paths:paths});if(error)throw error;say("letterMsg","Pengajuan diterima. Simpan kode tracking Anda: "+code);f.reset()}catch(err){say("letterMsg",err.message||"Pengajuan gagal dikirim.")}});
-document.getElementById("trackForm").addEventListener("submit",async e=>{e.preventDefault();try{needDB();const code=document.getElementById("trackingCode").value.trim();const {data,error}=await db.rpc("track_letter_request",{p_tracking_code:code});if(error)throw error;const r=Array.isArray(data)?data[0]:data;document.getElementById("trackingResult").textContent=r?("Status: "+r.status+" • Diperbarui: "+new Date(r.updated_at).toLocaleString("id-ID")):"Kode tracking tidak ditemukan."}catch(err){document.getElementById("trackingResult").textContent=err.message}});
-document.getElementById("complaintForm").addEventListener("submit",async e=>{e.preventDefault();try{needDB();const f=e.target,d=Object.fromEntries(new FormData(f).entries());say("complaintMsg","Mengirim laporan…");const paths=await submitFiles([...f.elements.evidence.files],"pengaduan");let lat=null,lng=null;if(d.coordinates){[lat,lng]=d.coordinates.split(",").map(Number)}const ticket="ADU-"+crypto.randomUUID().replaceAll("-","").slice(0,12).toUpperCase();const {error}=await db.from("complaints").insert({ticket_code:ticket,reporter_name:d.reporter_name,phone:d.phone,category:d.category,location_text:d.location_text,latitude:lat,longitude:lng,description:d.description,evidence_paths:paths});if(error)throw error;say("complaintMsg","Laporan terkirim. Simpan nomor tiket: "+ticket);f.reset()}catch(err){say("complaintMsg",err.message||"Laporan gagal dikirim.")}});
-function getGPS(){const el=document.getElementById("gps");if(!navigator.geolocation){el.value="Browser tidak mendukung GPS";return}el.value="Meminta izin lokasi…";navigator.geolocation.getCurrentPosition(p=>el.value=p.coords.latitude.toFixed(6)+", "+p.coords.longitude.toFixed(6),()=>el.value="Lokasi tidak tersedia / izin ditolak",{enableHighAccuracy:true,timeout:12000})}
-async function loadPublic(){if(!db)return;try{const {data}=await db.from("news").select("id,title,body,category,published_at").eq("is_published",true).order("published_at",{ascending:false}).limit(6);if(data?.length)document.getElementById("newsList").innerHTML=data.map(n=>`<article class="card news-card"><div class="news-art">📰</div><div class="news-body"><div class="news-meta">${safe(n.category||"Berita")} • ${n.published_at?new Date(n.published_at).toLocaleDateString("id-ID"):""}</div><h3>${safe(n.title)}</h3><p>${safe(n.body)}</p></div></article>`).join("")}catch(e){console.warn(e)}
-try{const {data}=await db.from("umkm_products").select("id,name,description,price,contact,category").eq("is_active",true).order("created_at",{ascending:false}).limit(12);if(data?.length)document.getElementById("umkmList").innerHTML=data.map(p=>`<div class="card product"><div class="product-art">🛍️</div><div><span class="pill">${safe(p.category||"Produk warga")}</span><h3>${safe(p.name)}</h3><p>${safe(p.description||"")}</p><div class="price">${p.price?"Rp "+Number(p.price).toLocaleString("id-ID"):"Hubungi penjual"}</div><p>${safe(p.contact||"")}</p></div></div>`).join("")}catch(e){console.warn(e)}}
+async function loadPublic() {
+  if (!db) return;
+
+  try {
+    const { data } = await db.from("news")
+      .select("id,title,body,category,published_at")
+      .eq("is_published", true)
+      .order("published_at", { ascending: false })
+      .limit(6);
+
+    if (data?.length) {
+      document.getElementById("newsList").innerHTML =
+        data.map(n => `
+          <article class="card news-card">
+            <div class="news-art">📰</div>
+            <div class="news-body">
+              <div class="news-meta">
+                ${safe(n.category || "Berita")} •
+                ${n.published_at
+                  ? new Date(n.published_at).toLocaleDateString("id-ID")
+                  : ""}
+              </div>
+              <h3>${safe(n.title)}</h3>
+              <p>${safe(n.body)}</p>
+            </div>
+          </article>
+        `).join("");
+    }
+  } catch (e) {
+    console.warn("Berita:", e);
+  }
+
+  try {
+    const { data, error } = await db.from("umkm_products")
+      .select("id,name,description,price,contact,category,business_name,image_url")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    if (error) throw error;
+
+    const list = document.getElementById("umkmList");
+
+    if (!data || data.length === 0) {
+      list.innerHTML = `
+        <div class="card">
+          <div class="ico">🛍️</div>
+          <h3>Belum ada produk UMKM</h3>
+          <p>Jadilah warga pertama yang mendaftarkan produk usaha di Pasar Desa Tanjungmulya.</p>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = data.map(p => {
+      const digits = String(p.contact || "").replace(/\D/g, "");
+      const waNumber = digits.startsWith("0")
+        ? "62" + digits.slice(1)
+        : digits;
+
+      const waLink = /^62\d{7,15}$/.test(waNumber)
+        ? `https://wa.me/${waNumber}`
+        : "";
+
+      return `
+        <div class="card">
+          ${p.image_url
+            ? `<img src="${safe(p.image_url)}"
+                 alt="${safe(p.name)}"
+                 loading="lazy"
+                 style="width:100%;height:190px;object-fit:cover;border-radius:10px">`
+            : `<div class="product-art">🛍️</div>`
+          }
+
+          <div style="margin-top:12px">
+            <span class="pill">${safe(p.category || "Produk warga")}</span>
+            <h3>${safe(p.name)}</h3>
+            <p><b>${safe(p.business_name || "UMKM Warga")}</b></p>
+            <p>${safe(p.description || "")}</p>
+
+            <div class="price">
+              ${p.price !== null && p.price !== ""
+                ? "Rp " + Number(p.price).toLocaleString("id-ID")
+                : "Hubungi penjual"}
+            </div>
+
+            ${waLink
+              ? `<a class="link" href="${waLink}" target="_blank" rel="noopener">Hubungi Penjual via WhatsApp →</a>`
+              : ""
+            }
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  } catch (e) {
+    console.warn("UMKM:", e);
+    document.getElementById("umkmList").innerHTML =
+      '<div class="card">Produk UMKM belum dapat dimuat. Silakan coba kembali.</div>';
+  }
+}
 document.getElementById("loginForm").addEventListener("submit",async e=>{e.preventDefault();try{needDB();const fd=new FormData(e.target);const {data,error}=await db.auth.signInWithPassword({email:fd.get("email"),password:fd.get("password")});if(error)throw error;currentAdmin=data.user;say("loginMsg","Login berhasil.");document.getElementById("adminPanel").style.display="block";document.getElementById("adminEmail").textContent=currentAdmin.email;await loadAdmin("letters")}catch(err){say("loginMsg",err.message)}});
 async function logout(){if(db)await db.auth.signOut();currentAdmin=null;document.getElementById("adminPanel").style.display="none";say("loginMsg","Anda sudah keluar.")}
 async function loadAdmin(kind){try{needDB();let table=kind==="letters"?"letter_requests":kind==="complaints"?"complaints":kind==="news"?"news":"umkm_products";let {data,error}=await db.from(table).select("*").order("created_at",{ascending:false}).limit(100);if(error)throw error;let cols=kind==="letters"?["tracking_code","full_name","letter_type","status","created_at"]:kind==="complaints"?["ticket_code","reporter_name","category","status","created_at"]:kind==="news"?["title","category","is_published","created_at"]:["name","category","price","is_active","created_at"];let html="<table><thead><tr>"+cols.map(c=>"<th>"+safe(c)+"</th>").join("")+(["letters","complaints"].includes(kind)?"<th>Ubah status</th>":"")+"</tr></thead><tbody>";for(const r of data||[]){html+="<tr>"+cols.map(c=>"<td>"+safe(r[c])+"</td>").join("");if(["letters","complaints"].includes(kind)){const id=r.id;html+=`<td><select onchange="updateStatus('${table}','${id}',this.value)"><option value="">Pilih status</option>${["Diterima","Diproses","Selesai","Siap Diambil"].map(s=>`<option>${s}</option>`).join("")}</select></td>`}html+="</tr>"}document.getElementById("adminContent").innerHTML=html+"</tbody></table>"}catch(err){document.getElementById("adminContent").textContent=err.message}}
 async function updateStatus(table,id,status){if(!status)return;const {error}=await db.from(table).update({status}).eq("id",id);if(error)alert(error.message);else alert("Status diperbarui.")}
-loadPublic();
+document.getElementById("umkmForm").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const form = e.target;
+  const msg = document.getElementById("umkmMsg");
+
+  try {
+    needDB();
+
+    const d = Object.fromEntries(new FormData(form).entries());
+    const photo = form.elements.photo.files[0];
+
+    if (!photo) throw new Error("Silakan pilih foto produk.");
+
+    if (photo.size > 5 * 1024 * 1024) {
+      throw new Error("Ukuran foto maksimal 5 MB.");
+    }
+
+    if (!["image/jpeg","image/png","image/webp"].includes(photo.type)) {
+      throw new Error("Format foto harus JPG, PNG, atau WEBP.");
+    }
+
+    msg.textContent = "Mengunggah foto produk...";
+
+    const ext = photo.type === "image/png" ? "png" :
+                photo.type === "image/webp" ? "webp" : "jpg";
+
+    const path = "produk/" + crypto.randomUUID() + "." + ext;
+
+    const { error: uploadError } = await db.storage
+      .from("umkm-foto")
+      .upload(path, photo, {
+        contentType: photo.type,
+        upsert: false
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: imageData } = db.storage
+      .from("umkm-foto")
+      .getPublicUrl(path);
+
+    msg.textContent = "Menyimpan pendaftaran...";
+
+    const { error } = await db.from("umkm_products").insert({
+      owner_name: d.owner_name,
+      business_name: d.business_name,
+      name: d.name,
+      description: d.description,
+      category: d.category,
+      price: Number(d.price),
+      contact: d.contact,
+      image_url: imageData.publicUrl,
+      is_active: false
+    });
+
+    if (error) throw error;
+
+    msg.textContent =
+      "Pendaftaran berhasil! Produk menunggu pemeriksaan admin desa.";
+
+    form.reset();
+
+  } catch (err) {
+    msg.textContent = "Pendaftaran gagal: " +
+      (err.message || "Terjadi kesalahan.");
+  }
+});
+  loadPublic();
 </script>
 </body></html>
