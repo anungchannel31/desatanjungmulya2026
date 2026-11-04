@@ -247,7 +247,114 @@ async function loadPublic() {
 }
 document.getElementById("loginForm").addEventListener("submit",async e=>{e.preventDefault();try{needDB();const fd=new FormData(e.target);const {data,error}=await db.auth.signInWithPassword({email:fd.get("email"),password:fd.get("password")});if(error)throw error;currentAdmin=data.user;say("loginMsg","Login berhasil.");document.getElementById("adminPanel").style.display="block";document.getElementById("adminEmail").textContent=currentAdmin.email;await loadAdmin("letters")}catch(err){say("loginMsg",err.message)}});
 async function logout(){if(db)await db.auth.signOut();currentAdmin=null;document.getElementById("adminPanel").style.display="none";say("loginMsg","Anda sudah keluar.")}
-async function loadAdmin(kind){try{needDB();let table=kind==="letters"?"letter_requests":kind==="complaints"?"complaints":kind==="news"?"news":"umkm_products";let {data,error}=await db.from(table).select("*").order("created_at",{ascending:false}).limit(100);if(error)throw error;let cols=kind==="letters"?["tracking_code","full_name","letter_type","status","created_at"]:kind==="complaints"?["ticket_code","reporter_name","category","status","created_at"]:kind==="news"?["title","category","is_published","created_at"]:["name","category","price","is_active","created_at"];let html="<table><thead><tr>"+cols.map(c=>"<th>"+safe(c)+"</th>").join("")+(["letters","complaints"].includes(kind)?"<th>Ubah status</th>":"")+"</tr></thead><tbody>";for(const r of data||[]){html+="<tr>"+cols.map(c=>"<td>"+safe(r[c])+"</td>").join("");if(["letters","complaints"].includes(kind)){const id=r.id;html+=`<td><select onchange="updateStatus('${table}','${id}',this.value)"><option value="">Pilih status</option>${["Diterima","Diproses","Selesai","Siap Diambil"].map(s=>`<option>${s}</option>`).join("")}</select></td>`}html+="</tr>"}document.getElementById("adminContent").innerHTML=html+"</tbody></table>"}catch(err){document.getElementById("adminContent").textContent=err.message}}
+
+async function loadAdmin(kind) {
+  try {
+    needDB();
+
+    const table = kind === "letters" ? "letter_requests" :
+      kind === "complaints" ? "complaints" :
+      kind === "news" ? "news" : "umkm_products";
+
+    const { data, error } = await db
+      .from(table)
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+
+    if (kind === "umkm") {
+      let html = `
+        <h3>Persetujuan Pendaftaran UMKM</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nama Usaha</th>
+              <th>Pemilik</th>
+              <th>Produk</th>
+              <th>Harga</th>
+              <th>Foto</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      for (const r of data || []) {
+        html += `<tr>
+          <td>${safe(r.business_name)}</td>
+          <td>${safe(r.owner_name)}</td>
+          <td>${safe(r.name)}</td>
+          <td>Rp ${safe(r.price)}</td>
+          <td>${r.image_url ? `<a href="${safe(r.image_url)}" target="_blank" rel="noopener">Lihat foto</a>` : "-"}</td>
+          <td>${r.is_active ? "Aktif" : "Menunggu"}</td>
+          <td>
+            ${r.is_active ? "Sudah disetujui" :
+              `<button type="button" onclick="approveUMKM('${r.id}')">Setujui</button>`}
+          </td>
+        </tr>`;
+      }
+
+      document.getElementById("adminContent").innerHTML =
+        html + "</tbody></table>";
+      return;
+    }
+
+    const cols = kind === "letters"
+      ? ["tracking_code", "full_name", "letter_type", "status", "created_at"]
+      : kind === "complaints"
+      ? ["ticket_code", "reporter_name", "category", "status", "created_at"]
+      : ["title", "category", "is_published", "created_at"];
+
+    let html = "<table><thead><tr>" +
+      cols.map(c => "<th>" + safe(c) + "</th>").join("") +
+      (["letters", "complaints"].includes(kind) ? "<th>Ubah status</th>" : "") +
+      "</tr></thead><tbody>";
+
+    for (const r of data || []) {
+      html += "<tr>" + cols.map(c => "<td>" + safe(r[c]) + "</td>").join("");
+
+      if (["letters", "complaints"].includes(kind)) {
+        html += `<td><select onchange="updateStatus('${table}','${r.id}',this.value)">
+          <option value="">Pilih status</option>
+          ${["Diterima", "Diproses", "Selesai", "Siap Diambil"].map(s => `<option>${s}</option>`).join("")}
+        </select></td>`;
+      }
+
+      html += "</tr>";
+    }
+
+    document.getElementById("adminContent").innerHTML =
+      html + "</tbody></table>";
+
+  } catch (err) {
+    document.getElementById("adminContent").textContent = err.message;
+  }
+}
+
+async function approveUMKM(id) {
+  if (!confirm("Setujui produk UMKM ini?")) return;
+
+  try {
+    needDB();
+
+    const { error } = await db
+      .from("umkm_products")
+      .update({ is_active: true })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    alert("Produk UMKM berhasil disetujui!");
+    await loadAdmin("umkm");
+    await loadPublic();
+
+  } catch (err) {
+    alert("Gagal menyetujui produk: " + err.message);
+  }
+}
+
 async function updateStatus(table,id,status){if(!status)return;const {error}=await db.from(table).update({status}).eq("id",id);if(error)alert(error.message);else alert("Status diperbarui.")}
 document.getElementById("umkmForm").addEventListener("submit", async e => {
   e.preventDefault();
