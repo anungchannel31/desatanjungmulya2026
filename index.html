@@ -158,7 +158,13 @@ async function loadPublic() {
   document.getElementById("newsList").innerHTML =
     data.map(n => `
       <article class="card news-card">
-        <div class="news-art">📰</div>
+        ${n.image_url
+  ? `<img src="${safe(n.image_url)}"
+      alt="${safe(n.title)}"
+      loading="lazy"
+      style="width:100%;height:190px;object-fit:cover;border-radius:12px">`
+  : `<div class="news-art">📰</div>`
+}
         <div class="news-body">
           <div class="news-meta">
             ${safe(n.category || "Berita")} •
